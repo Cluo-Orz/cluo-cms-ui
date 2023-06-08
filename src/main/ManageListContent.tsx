@@ -2,6 +2,7 @@ import React from 'react';
 import { ConfigContext, configData } from '../ConfigContext';
 import axios from "axios";
 import { DynamicApi } from "./DynamicContent";
+import {Button, Input, Space, Table} from "antd";
 
 type ConfigType = typeof configData;
 
@@ -17,6 +18,7 @@ interface ManageListContentState {
     listTotal: number,
     reloadTag: boolean;
     listData: [];
+    columns: [];
     ListSelectData: DynamicApi | undefined,
     ListSelectOptions: DynamicApi | undefined,
     ListInsertData: DynamicApi | undefined,
@@ -35,6 +37,7 @@ class ManageListContent extends React.PureComponent<ManageListContentProps, Mana
             listTotal: 0,
             // @ts-ignore
             listData: [],
+            columns: [],
             ListSelectData: this.props.actions.find(item => item.action='ListSelectData'),
             ListSelectOptions: this.props.actions.find(item => item.action='ListSelectOptions'),
             ListInsertData: this.props.actions.find(item => item.action='ListInsertData'),
@@ -45,9 +48,28 @@ class ManageListContent extends React.PureComponent<ManageListContentProps, Mana
 
     componentDidMount() {
         console.log("componentDidMount")
+        this.syncColumns();
         this.syncDataFromRemote(this.state.ListSelectData);
     }
 
+    syncColumns() {
+        let columns: any[] = []
+        if (this.state.ListSelectOptions) {
+            this.state.ListSelectOptions.fields.forEach(
+                item => {
+                    columns.push({
+                        title: item.displayName,
+                        dataIndex: item.name,
+                        key: item.name,
+                    })
+                }
+            )
+        }
+        this.setState({
+            // @ts-ignore
+            columns: columns
+        })
+    }
 
     componentDidUpdate(prevProps: ManageListContentProps) {
 
@@ -63,6 +85,7 @@ class ManageListContent extends React.PureComponent<ManageListContentProps, Mana
                 ListUpdateData: this.props.actions.find(item => item.action='ListUpdateData'),
                 ListClickButton: this.props.actions.find(item => item.action='ListClickButton'),
             });
+            this.syncColumns();
             this.syncDataFromRemote(this.props.actions.find(item => item.action='ListSelectData'));
         }
     }
@@ -111,12 +134,48 @@ class ManageListContent extends React.PureComponent<ManageListContentProps, Mana
         });
     }
 
+    private searchComponent(ListSelectData: DynamicApi | undefined) {
+        if(!ListSelectData) {
+            return null
+        }
+        return (
+            <Space direction="horizontal" size="middle" style={{padding: 4, paddingLeft: 4}}>
+                <Space.Compact>
+                    <Button type="primary" onClick={() =>this.syncDataFromRemote(this.state.ListSelectData)}>刷新</Button>
+                </Space.Compact>
+                {
+                    ListSelectData.params.map(
+                        item => {
+                            if (item.type === 'Button') {
+
+                            } else {
+                                return (
+                                    <Space.Compact>
+                                        <Input placeholder={item.displayName} defaultValue={item.defaultValue}
+                                               required={item.required}></Input>
+                                    </Space.Compact>
+                                )
+                            }
+                        }
+                    )
+                }
+            </Space>
+        )
+    }
 
     render() {
         return (
-            <div>{JSON.stringify(this.state.listData)+"   "+ this.state.listTotal}</div>
+            <div>
+                <div>
+
+                    {this.searchComponent(this.state.ListSelectData)}
+                </div>
+                <div><Table columns={this.state.columns} dataSource={this.state.listData} /></div>
+            </div>
+
         );
     }
+
 }
 
 export default ManageListContent;
