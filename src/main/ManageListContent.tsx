@@ -1,8 +1,9 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import { ConfigContext, configData } from '../ConfigContext';
 import axios from "axios";
 import { DynamicApi } from "./DynamicContent";
-import {Button, Input, Space, Table} from "antd";
+import { Button, Col, Form, Input, Row, Space, Table } from "antd";
+import { SyncOutlined, DownOutlined } from "@ant-design/icons";
 
 type ConfigType = typeof configData;
 
@@ -10,172 +11,188 @@ interface ManageListContentProps {
     parentReloadTag: number;
     style?: React.CSSProperties;
     config: ConfigType;
-    actions: DynamicApi[]
+    actions: DynamicApi[];
 }
-
 
 interface ManageListContentState {
-    listTotal: number,
+    listTotal: number;
     reloadTag: boolean;
+    searchParam: {};
     listData: [];
     columns: [];
-    ListSelectData: DynamicApi | undefined,
-    ListSelectOptions: DynamicApi | undefined,
-    ListInsertData: DynamicApi | undefined,
-    ListUpdateData: DynamicApi | undefined,
-    ListClickButton: DynamicApi | undefined
+    ListSelectData: DynamicApi | undefined;
+    ListSelectOptions: DynamicApi | undefined;
+    ListInsertData: DynamicApi | undefined;
+    ListUpdateData: DynamicApi | undefined;
+    ListClickButton: DynamicApi | undefined;
 }
 
-class ManageListContent extends React.PureComponent<ManageListContentProps, ManageListContentState> {
-    constructor(props: ManageListContentProps) {
-        super(props);
+const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, style, config, actions }) => {
+    const [listTotal, setListTotal] = useState(0);
+    const [reloadTag, setReloadTag] = useState(false);
+    const [searchParam, setSearchParam] = useState({});
+    const [listData, setListData] = useState([]);
+    const [columns, setColumns] = useState([]);
+    const [ListSelectData, setListSelectData] = useState<DynamicApi | undefined>(actions.find(item => item.action === 'ListSelectData'));
+    const [ListSelectOptions, setListSelectOptions] = useState<DynamicApi | undefined>(actions.find(item => item.action === 'ListSelectOptions'));
+    const [ListInsertData, setListInsertData] = useState<DynamicApi | undefined>(actions.find(item => item.action === 'ListInsertData'));
+    const [ListUpdateData, setListUpdateData] = useState<DynamicApi | undefined>(actions.find(item => item.action === 'ListUpdateData'));
+    const [ListDeleteData, setListDeleteData] = useState<DynamicApi | undefined>(actions.find(item => item.action === 'ListDeleteData'));
+    const [ListSelectDetail, setListSelectDetail] = useState<DynamicApi | undefined>(actions.find(item => item.action === 'ListSelectDetail'));
+    const [form] = Form.useForm();
 
-        console.log("constructor");
+    useEffect(() => {
+        console.log("componentDidMount");
+        syncColumns(ListSelectData);
+        syncDataFromRemote(ListSelectData, searchParam);
+    }, []);
 
-        this.state = {
-            reloadTag: false,
-            listTotal: 0,
-            // @ts-ignore
-            listData: [],
-            columns: [],
-            ListSelectData: this.props.actions.find(item => item.action='ListSelectData'),
-            ListSelectOptions: this.props.actions.find(item => item.action='ListSelectOptions'),
-            ListInsertData: this.props.actions.find(item => item.action='ListInsertData'),
-            ListUpdateData: this.props.actions.find(item => item.action='ListUpdateData'),
-            ListClickButton: this.props.actions.find(item => item.action='ListClickButton'),
-        }
-    }
+    useEffect(() => {
+        console.log("componentDidUpdate");
+        console.log(actions);
+        setListSelectData(actions.find(item => item.action === 'ListSelectData'));
+        setListSelectOptions(actions.find(item => item.action === 'ListSelectOptions'));
+        setListInsertData(actions.find(item => item.action === 'ListInsertData'));
+        setListUpdateData(actions.find(item => item.action === 'ListUpdateData'));
+        setListDeleteData(actions.find(item => item.action === 'ListDeleteData'));
+        setListSelectDetail(actions.find(item => item.action === 'ListSelectDetail'));
+        syncColumns(actions.find(item => item.action === 'ListSelectData'));
+        syncDataFromRemote(actions.find(item => item.action === 'ListSelectData'), searchParam);
 
-    componentDidMount() {
-        console.log("componentDidMount")
-        this.syncColumns();
-        this.syncDataFromRemote(this.state.ListSelectData);
-    }
 
-    syncColumns() {
-        let columns: any[] = []
-        if (this.state.ListSelectOptions) {
-            this.state.ListSelectOptions.fields.forEach(
-                item => {
-                    columns.push({
-                        title: item.displayName,
-                        dataIndex: item.name,
-                        key: item.name,
-                    })
-                }
-            )
-        }
-        this.setState({
-            // @ts-ignore
-            columns: columns
-        })
-    }
+        console.log(columns)
+        console.log(listData)
+    }, [parentReloadTag]);
 
-    componentDidUpdate(prevProps: ManageListContentProps) {
+    const syncColumns = (ListSelectData:DynamicApi|undefined) => {
+        let newColumns: any[] = [];
 
-        const { parentReloadTag } = this.props;
-        // 当parentReloadTag与reloadTag不同时，刷新整个组件
-        if (parentReloadTag !== prevProps.parentReloadTag) {
-            console.log("componentDidUpdate")
-            console.log(this.props.actions)
-            this.setState({
-                ListSelectData: this.props.actions.find(item => item.action='ListSelectData'),
-                ListSelectOptions: this.props.actions.find(item => item.action='ListSelectOptions'),
-                ListInsertData: this.props.actions.find(item => item.action='ListInsertData'),
-                ListUpdateData: this.props.actions.find(item => item.action='ListUpdateData'),
-                ListClickButton: this.props.actions.find(item => item.action='ListClickButton'),
+        if (ListSelectData) {
+            ListSelectData.fields.forEach(item => {
+                newColumns.push({
+                    title: item.displayName,
+                    dataIndex: item.name,
+                    key: item.name,
+                });
             });
-            this.syncColumns();
-            this.syncDataFromRemote(this.props.actions.find(item => item.action='ListSelectData'));
         }
-    }
 
-    syncDataFromRemote(param:DynamicApi | undefined) {
-        if(!param) {
+        console.log("ListSelectData ", ListSelectData)
+        console.log('syncColumns ', newColumns);
+        // @ts-ignore
+        setColumns(newColumns);
+    };
+
+    const syncDataFromRemote = (param: DynamicApi | undefined, formData: any = {}) => {
+        if (!param) {
             return {
                 total: 0,
-                list: []
-            }
+                list: [],
+            };
         }
-        let data = {}
-        param.params.filter(item => item.defaultValue).forEach(
-            item => {
-                // @ts-ignore
-                data[item.name] = item.defaultValue
-            }
-        );
 
+        let data = formData;
 
-        axios(
-            {
-                method: param.method,
-                url: this.props.config.dataPath+param.url,
-                headers: {
-                    'Content-Type': 'application/json;charset=UTF-8'
-                },
-                data: data
+        param.params.filter(item => item.defaultValue).forEach(item => {
+            if (!data[item.name] && item.defaultValue) {
+                data[item.name] = item.defaultValue;
             }
-        ).then((response) => {
-            let listData = []
-            let total  = 0
-            if (Array.isArray(response.data)) {
-                total = response.data.length;
-                listData = response.data;
-            } else if (typeof response.data === 'object' && response.data.data) {
-                total = response.data.total;
-                listData = response.data.data;
-            }
-
-            this.setState({
-                listTotal: total,
-                // @ts-ignore
-                listData: listData
-            });
         });
-    }
 
-    private searchComponent(ListSelectData: DynamicApi | undefined) {
-        if(!ListSelectData) {
-            return null
-        }
-        return (
-            <Space direction="horizontal" size="middle" style={{padding: 4, paddingLeft: 4}}>
-                <Space.Compact>
-                    <Button type="primary" onClick={() =>this.syncDataFromRemote(this.state.ListSelectData)}>刷新</Button>
-                </Space.Compact>
-                {
-                    ListSelectData.params.map(
-                        item => {
-                            if (item.type === 'Button') {
-
-                            } else {
-                                return (
-                                    <Space.Compact>
-                                        <Input placeholder={item.displayName} defaultValue={item.defaultValue}
-                                               required={item.required}></Input>
-                                    </Space.Compact>
-                                )
-                            }
-                        }
-                    )
+        axios({
+            method: param.method,
+            url: config.dataPath + param.url,
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8',
+            },
+            data: data,
+        })
+            .then(response => {
+                let listData = [];
+                let total = 0;
+                if (Array.isArray(response.data)) {
+                    total = response.data.length;
+                    listData = response.data;
+                } else if (typeof response.data === 'object' && response.data.data) {
+                    total = response.data.total;
+                    listData = response.data.data;
                 }
-            </Space>
-        )
-    }
+                // 如果data[i]中，没有id，则向每个元素补充一个id
+                listData.forEach((item: any, index: number) => {
+                    if (!item.id) {
+                        item.id = index;
+                    }
+                });
+                console.log(listData)
+                setListTotal(total);
+                setListData(listData);
+            });
+    };
 
-    render() {
+    const onSearch = (values: any) => {
+        setSearchParam(values);
+        syncDataFromRemote(ListSelectData, values);
+    };
+
+    const searchForm = (ListSelectData: DynamicApi | undefined) => {
+        if (!ListSelectData || !ListSelectData.params) {
+            return null;
+        }
+
         return (
-            <div>
-                <div>
-
-                    {this.searchComponent(this.state.ListSelectData)}
-                </div>
-                <div><Table columns={this.state.columns} dataSource={this.state.listData} /></div>
-            </div>
-
+            <Form layout="inline" onFinish={onSearch} style={style} form={form}>
+                <Col flex="80px" key={0}>
+                    <Button type="primary" htmlType="submit">
+                        搜索
+                    </Button>
+                </Col>
+                <Col flex="80px" key={1}>
+                    <Button onClick={() => form.resetFields()}>
+                        重置
+                    </Button>
+                </Col>
+                {ListSelectData.params.map(item => {
+                    let res = <div>unknown type</div>;
+                    if (item.type === 'Button') {
+                        // TODO: Handle Button type
+                    } else {
+                        res = (
+                            <Col key={item.name}>
+                                <Form.Item required={item.required} name={item.name} label={item.displayName} rules={[{ pattern: new RegExp(item.regex), message: item.tips }]}>
+                                    <Input placeholder={item.placeholder}  required={item.required} />
+                                </Form.Item>
+                            </Col>
+                        );
+                    }
+                    return res;
+                })}
+            </Form>
         );
-    }
+    };
 
-}
+    const searchComponent = (ListSelectData: DynamicApi | undefined) => {
+        if (!ListSelectData) {
+            return null;
+        }
+
+        return (
+            <Space direction="vertical" size="middle" style={{ paddingBottom: 20, minWidth: "100%" }}>
+                <Space.Compact>
+                    <Button type="primary" shape="circle" onClick={() => syncDataFromRemote(ListSelectData, searchParam)}>
+                        <SyncOutlined />
+                    </Button>
+                </Space.Compact>
+                {searchForm(ListSelectData)}
+            </Space>
+        );
+    };
+
+    return (
+        <div>
+            {searchComponent(ListSelectData)}
+            <Table columns={columns} dataSource={listData} />
+        </div>
+    );
+};
 
 export default ManageListContent;
