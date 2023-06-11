@@ -287,7 +287,7 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
             {}
             <Table columns={
                 columns
-            } dataSource={listData} />
+            } dataSource={listData} rowKey={ListSelectData?.keyField?ListSelectData?.keyField:"id"}/>
         </div>
     );
 };
