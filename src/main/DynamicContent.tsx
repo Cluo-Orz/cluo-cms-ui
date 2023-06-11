@@ -25,6 +25,7 @@ const apiData = {
     url: '',
     method: '',
     contentType: '',
+    keyField: '',
     fields:[{
         dataUrl: '',
         placeholder: '',

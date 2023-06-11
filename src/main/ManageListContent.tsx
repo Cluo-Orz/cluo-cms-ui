@@ -1,9 +1,9 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { ConfigContext, configData } from '../ConfigContext';
 import axios from "axios";
 import { DynamicApi } from "./DynamicContent";
-import { Button, Col, Form, Input, Row, Space, Table } from "antd";
-import { SyncOutlined, DownOutlined } from "@ant-design/icons";
+import { Button, Col, Form, Input, Row, Space, Table, Modal } from "antd";
+import { SyncOutlined, DownOutlined,SettingTwoTone } from "@ant-design/icons";
 
 type ConfigType = typeof configData;
 
@@ -24,7 +24,9 @@ interface ManageListContentState {
     ListSelectOptions: DynamicApi | undefined;
     ListInsertData: DynamicApi | undefined;
     ListUpdateData: DynamicApi | undefined;
-    ListClickButton: DynamicApi | undefined;
+    ListDeleteData: DynamicApi | undefined;
+    ListSelectDetail: DynamicApi | undefined;
+    detailData: any;
 }
 
 const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, style, config, actions }) => {
@@ -39,11 +41,12 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
     const [ListUpdateData, setListUpdateData] = useState<DynamicApi | undefined>(actions.find(item => item.action === 'ListUpdateData'));
     const [ListDeleteData, setListDeleteData] = useState<DynamicApi | undefined>(actions.find(item => item.action === 'ListDeleteData'));
     const [ListSelectDetail, setListSelectDetail] = useState<DynamicApi | undefined>(actions.find(item => item.action === 'ListSelectDetail'));
+    const [detailData, setDetailData] = useState<any>(null); // Added detailData state
     const [form] = Form.useForm();
 
     useEffect(() => {
         console.log("componentDidMount");
-        syncColumns(ListSelectData);
+        syncColumns(ListSelectData, ListSelectDetail);
         syncDataFromRemote(ListSelectData, searchParam);
     }, []);
 
@@ -56,15 +59,17 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
         setListUpdateData(actions.find(item => item.action === 'ListUpdateData'));
         setListDeleteData(actions.find(item => item.action === 'ListDeleteData'));
         setListSelectDetail(actions.find(item => item.action === 'ListSelectDetail'));
-        syncColumns(actions.find(item => item.action === 'ListSelectData'));
+        syncColumns(actions.find(item => item.action === 'ListSelectData'), actions.find(item => item.action === 'ListSelectDetail'));
         syncDataFromRemote(actions.find(item => item.action === 'ListSelectData'), searchParam);
-
 
         console.log(columns)
         console.log(listData)
     }, [parentReloadTag]);
 
-    const syncColumns = (ListSelectData:DynamicApi|undefined) => {
+    const syncColumns = (
+        ListSelectData: DynamicApi | undefined,
+        ListSelectDetail: DynamicApi | undefined
+    ) => {
         let newColumns: any[] = [];
 
         if (ListSelectData) {
@@ -75,8 +80,13 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
                     key: item.name,
                 });
             });
+            if(ListSelectDetail){
+                let detailColumn = renderDetailsButton(ListSelectDetail)
+                if(detailColumn){
+                    newColumns.push(detailColumn)
+                }
+            }
         }
-
         console.log("ListSelectData ", ListSelectData)
         console.log('syncColumns ', newColumns);
         // @ts-ignore
@@ -134,6 +144,30 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
         syncDataFromRemote(ListSelectData, values);
     };
 
+    const onClickDetail = (record: any, ListSelectDetail: DynamicApi | undefined) => {
+        if (ListSelectDetail) {
+            let keyField = ListSelectDetail.keyField
+            if(!keyField){
+                keyField = 'id'
+            }
+            let data = {}
+            // @ts-ignore
+            data[keyField] = record[keyField]
+            axios({
+                method: ListSelectDetail.method,
+                url: config.dataPath + ListSelectDetail.url,
+                headers: {
+                    'Content-Type': 'application/json;charset=UTF-8',
+                },
+                params: data,
+            })
+                .then(response => {
+                    setDetailData(response.data);
+                    showModal();
+                });
+        }
+    };
+
     const searchForm = (ListSelectData: DynamicApi | undefined) => {
         if (!ListSelectData || !ListSelectData.params) {
             return null;
@@ -159,7 +193,7 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
                         res = (
                             <Col key={item.name}>
                                 <Form.Item required={item.required} name={item.name} label={item.displayName} rules={[{ pattern: new RegExp(item.regex), message: item.tips }]}>
-                                    <Input placeholder={item.placeholder}  required={item.required} />
+                                    <Input placeholder={item.placeholder} required={item.required} />
                                 </Form.Item>
                             </Col>
                         );
@@ -187,10 +221,53 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
         );
     };
 
+    const showModal = () => {
+        Modal.info({
+            title: '查看详情',
+            okText: "关闭",
+            icon: <SettingTwoTone/>,
+            content: (
+                <div>
+                    {ListSelectDetail && ListSelectDetail.fields && ListSelectDetail.fields.map((item) => {
+                        let value = detailData[item.name];
+                        return (
+                            <Col key={item.name}>
+                                <Form.Item label={item.displayName}>
+                                    <Input value={value} readOnly bordered={false} />
+                                </Form.Item>
+                            </Col>
+                        );
+                    })}
+                </div>
+            ),
+            onOk() {},
+        });
+    };
+
+    const renderDetailsButton = (ListSelectDetail: DynamicApi | undefined) => {
+        if (ListSelectDetail) {
+            return {
+                title: '详情',
+                dataIndex: 'detailscluo',
+                key: 'detailscluo',
+                // @ts-ignore
+                render: (_, record) => (
+                    <Button type="dashed" onClick={() => onClickDetail(record, ListSelectDetail)}>
+                        详情
+                    </Button>
+                ),
+            };
+        }
+        return null;
+    };
+
     return (
         <div>
             {searchComponent(ListSelectData)}
-            <Table columns={columns} dataSource={listData} />
+            {}
+            <Table columns={
+                columns
+            } dataSource={listData} />
         </div>
     );
 };
