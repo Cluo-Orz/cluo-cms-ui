@@ -4,6 +4,10 @@ import axios from "axios";
 import { DynamicApi } from "./DynamicContent";
 import { Button, Col, Form, Input, Row, Space, Table, Modal } from "antd";
 import { SyncOutlined, DownOutlined,SettingTwoTone } from "@ant-design/icons";
+import ContentUpdateModal from "./ContentUpdateModal";
+import ContentDetailModal from "./ContentDetailModal";
+import ContentDeleteModal from "./ContentDeleteModal";
+import ContentInsertModal from "./ContentInsertModal";
 
 type ConfigType = typeof configData;
 
@@ -12,21 +16,6 @@ interface ManageListContentProps {
     style?: React.CSSProperties;
     config: ConfigType;
     actions: DynamicApi[];
-}
-
-interface ManageListContentState {
-    listTotal: number;
-    reloadTag: boolean;
-    searchParam: {};
-    listData: [];
-    columns: [];
-    ListSelectData: DynamicApi | undefined;
-    ListSelectOptions: DynamicApi | undefined;
-    ListInsertData: DynamicApi | undefined;
-    ListUpdateData: DynamicApi | undefined;
-    ListDeleteData: DynamicApi | undefined;
-    ListSelectDetail: DynamicApi | undefined;
-    detailData: any;
 }
 
 const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, style, config, actions }) => {
@@ -44,27 +33,26 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
     const [detailData, setDetailData] = useState<any>(null); // Added detailData state
     const [form] = Form.useForm();
 
-    useEffect(() => {
-        console.log("componentDidMount");
-        syncColumns(ListSelectData, ListSelectDetail, ListUpdateData);
-        syncDataFromRemote(ListSelectData, searchParam);
-    }, []);
 
     useEffect(() => {
-        console.log("componentDidUpdate");
-        console.log(actions);
+        console.log("sync Configs");
         setListSelectData(actions.find(item => item.action === 'ListSelectData'));
         setListSelectOptions(actions.find(item => item.action === 'ListSelectOptions'));
         setListInsertData(actions.find(item => item.action === 'ListInsertData'));
         setListUpdateData(actions.find(item => item.action === 'ListUpdateData'));
         setListDeleteData(actions.find(item => item.action === 'ListDeleteData'));
         setListSelectDetail(actions.find(item => item.action === 'ListSelectDetail'));
-        syncColumns(actions.find(item => item.action === 'ListSelectData'), actions.find(item => item.action === 'ListSelectDetail'), actions.find(item => item.action === 'ListUpdateData'));
-        syncDataFromRemote(actions.find(item => item.action === 'ListSelectData'), searchParam);
-
-        console.log(columns)
-        console.log(listData)
     }, [parentReloadTag]);
+
+    useEffect(() => {
+        console.log("sync Columns")
+        syncColumns(actions.find(item => item.action === 'ListSelectData'), actions.find(item => item.action === 'ListSelectDetail'), actions.find(item => item.action === 'ListUpdateData'));
+    }, [ListSelectData, ListUpdateData, ListSelectDetail])
+
+    useEffect(() => {
+        console.log("sync DataFromRemote")
+        syncDataFromRemote(ListSelectData, searchParam);
+    }, [columns, searchParam])
 
     const syncColumns = (
         ListSelectData: DynamicApi | undefined,
@@ -95,6 +83,10 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
         // @ts-ignore
         setColumns(newColumns);
     };
+
+    const handleSyncDataFromRemote = (ListSelectData: DynamicApi | undefined) => {
+        syncDataFromRemote(ListSelectData, searchParam)
+    }
 
     const syncDataFromRemote = (param: DynamicApi | undefined, formData: any = {}) => {
         if (!param) {
@@ -144,32 +136,9 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
 
     const onSearch = (values: any) => {
         setSearchParam(values);
-        syncDataFromRemote(ListSelectData, values);
     };
 
-    const onClickDetail = (record: any, ListSelectDetail: DynamicApi | undefined) => {
-        if (ListSelectDetail) {
-            let keyField = ListSelectDetail.keyField
-            if(!keyField){
-                keyField = 'id'
-            }
-            let data = {}
-            // @ts-ignore
-            data[keyField] = record[keyField]
-            axios({
-                method: ListSelectDetail.method,
-                url: config.dataPath + ListSelectDetail.url,
-                headers: {
-                    'Content-Type': 'application/json;charset=UTF-8',
-                },
-                params: data,
-            })
-                .then(response => {
-                    setDetailData(response.data);
-                    showModal();
-                });
-        }
-    };
+
 
     const searchForm = (ListSelectData: DynamicApi | undefined) => {
         if (!ListSelectData || !ListSelectData.params) {
@@ -178,12 +147,24 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
 
         return (
             <Form layout="inline" onFinish={onSearch} style={style} form={form}>
-                <Col flex="80px" key={0}>
+                <Col flex="40px" key={0}>
+                    <Button type="primary" shape="circle" onClick={() => syncDataFromRemote(ListSelectData, searchParam)}>
+                        <SyncOutlined />
+                    </Button>
+                </Col>
+                {
+                    ListInsertData && (
+                        <Col flex="80px" key={1}>
+                            <ContentInsertModal ListInsertData={ListInsertData} ListSelectData={ListSelectData} dataPath={config.dataPath} onRefresh={handleSyncDataFromRemote}/>
+                        </Col>
+                    )
+                }
+                <Col flex="80px" key={2}>
                     <Button type="primary" htmlType="submit">
                         搜索
                     </Button>
                 </Col>
-                <Col flex="80px" key={1}>
+                <Col flex="80px" key={3}>
                     <Button onClick={() => form.resetFields()}>
                         重置
                     </Button>
@@ -214,46 +195,11 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
 
         return (
             <Space direction="vertical" size="middle" style={{ paddingBottom: 20, minWidth: "100%" }}>
-                <Space.Compact>
-                    <Button type="primary" shape="circle" onClick={() => syncDataFromRemote(ListSelectData, searchParam)}>
-                        <SyncOutlined />
-                    </Button>
-                </Space.Compact>
                 {searchForm(ListSelectData)}
             </Space>
         );
     };
 
-    const showModal = () => {
-        Modal.info({
-            title: '查看详情',
-            okText: "关闭",
-            icon: <SettingTwoTone/>,
-            content: (
-                <div>
-                    {ListSelectDetail && ListSelectDetail.fields && ListSelectDetail.fields.map((item) => {
-                        let value = detailData[item.name];
-                        return (
-                            <Col key={item.name}>
-                                <Form.Item label={item.displayName}>
-                                    <Input value={value} readOnly bordered={false} />
-                                </Form.Item>
-                            </Col>
-                        );
-                    })}
-                </div>
-            ),
-            onOk() {},
-        });
-    };
-
-    const onEdit = (record: any, ListUpdateData: DynamicApi | undefined) => {
-        if (ListUpdateData) {
-            // Perform the necessary logic for editing the record
-            // ...
-            console.log("Editing record:", record);
-        }
-    };
 
     const renderDetailsButton = (ListSelectDetail: DynamicApi | undefined, ListUpdateData: DynamicApi | undefined) => {
         if (ListSelectDetail || ListUpdateData) {
@@ -263,18 +209,23 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
                 key: 'actions',
                 // @ts-ignore
                 render: (_, record) => (
-                    <div>
+                    <Row justify="start">
+                        <Col span={4} key={'modal-detail'}>
                         {ListSelectDetail && (
-                            <Button type="dashed" onClick={() => onClickDetail(record, ListSelectDetail)}>
-                                详情
-                            </Button>
+                            <ContentDetailModal record={record} ListSelectDetail={ListSelectDetail} dataPath={config.dataPath}/>
                         )}
+                        </Col>
+                        <Col span={4}  key={'modal-update'}>
                         {ListUpdateData && (
-                            <Button type="primary" onClick={() => onEdit(record, ListUpdateData)}>
-                                编辑
-                            </Button>
+                            <ContentUpdateModal ListUpdateData={ListUpdateData} record={record} ListSelectDetail={ListSelectDetail} dataPath={config.dataPath} ListSelectData={ListSelectData} onRefresh={handleSyncDataFromRemote}/>
                         )}
-                    </div>
+                        </Col>
+                        <Col span={4} key={'modal-delete'}>
+                        {ListDeleteData && (
+                            <ContentDeleteModal ListDeleteData={ListDeleteData} record={record} ListSelectDetail={ListSelectDetail} dataPath={config.dataPath} ListSelectData={ListSelectData} onRefresh={handleSyncDataFromRemote}/>
+                        )}
+                        </Col>
+                    </Row>
                 ),
             };
         }
