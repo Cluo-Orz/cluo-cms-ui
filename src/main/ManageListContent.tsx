@@ -46,7 +46,7 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
 
     useEffect(() => {
         console.log("componentDidMount");
-        syncColumns(ListSelectData, ListSelectDetail);
+        syncColumns(ListSelectData, ListSelectDetail, ListUpdateData);
         syncDataFromRemote(ListSelectData, searchParam);
     }, []);
 
@@ -59,7 +59,7 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
         setListUpdateData(actions.find(item => item.action === 'ListUpdateData'));
         setListDeleteData(actions.find(item => item.action === 'ListDeleteData'));
         setListSelectDetail(actions.find(item => item.action === 'ListSelectDetail'));
-        syncColumns(actions.find(item => item.action === 'ListSelectData'), actions.find(item => item.action === 'ListSelectDetail'));
+        syncColumns(actions.find(item => item.action === 'ListSelectData'), actions.find(item => item.action === 'ListSelectDetail'), actions.find(item => item.action === 'ListUpdateData'));
         syncDataFromRemote(actions.find(item => item.action === 'ListSelectData'), searchParam);
 
         console.log(columns)
@@ -68,7 +68,8 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
 
     const syncColumns = (
         ListSelectData: DynamicApi | undefined,
-        ListSelectDetail: DynamicApi | undefined
+        ListSelectDetail: DynamicApi | undefined,
+        ListUpdateData: DynamicApi | undefined // Add ListUpdateData parameter
     ) => {
         let newColumns: any[] = [];
 
@@ -80,15 +81,17 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
                     key: item.name,
                 });
             });
-            if(ListSelectDetail){
-                let detailColumn = renderDetailsButton(ListSelectDetail)
-                if(detailColumn){
-                    newColumns.push(detailColumn)
+
+            if (ListSelectDetail || ListUpdateData) {
+                let detailColumn = renderDetailsButton(ListSelectDetail, ListUpdateData);
+                if (detailColumn) {
+                    newColumns.push(detailColumn);
                 }
             }
         }
-        console.log("ListSelectData ", ListSelectData)
-        console.log('syncColumns ', newColumns);
+
+        console.log("ListSelectData ", ListSelectData);
+        console.log("syncColumns ", newColumns);
         // @ts-ignore
         setColumns(newColumns);
     };
@@ -244,17 +247,34 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
         });
     };
 
-    const renderDetailsButton = (ListSelectDetail: DynamicApi | undefined) => {
-        if (ListSelectDetail) {
+    const onEdit = (record: any, ListUpdateData: DynamicApi | undefined) => {
+        if (ListUpdateData) {
+            // Perform the necessary logic for editing the record
+            // ...
+            console.log("Editing record:", record);
+        }
+    };
+
+    const renderDetailsButton = (ListSelectDetail: DynamicApi | undefined, ListUpdateData: DynamicApi | undefined) => {
+        if (ListSelectDetail || ListUpdateData) {
             return {
-                title: '详情',
-                dataIndex: 'detailscluo',
-                key: 'detailscluo',
+                title: '操作',
+                dataIndex: 'actions',
+                key: 'actions',
                 // @ts-ignore
                 render: (_, record) => (
-                    <Button type="dashed" onClick={() => onClickDetail(record, ListSelectDetail)}>
-                        详情
-                    </Button>
+                    <div>
+                        {ListSelectDetail && (
+                            <Button type="dashed" onClick={() => onClickDetail(record, ListSelectDetail)}>
+                                详情
+                            </Button>
+                        )}
+                        {ListUpdateData && (
+                            <Button type="primary" onClick={() => onEdit(record, ListUpdateData)}>
+                                编辑
+                            </Button>
+                        )}
+                    </div>
                 ),
             };
         }
