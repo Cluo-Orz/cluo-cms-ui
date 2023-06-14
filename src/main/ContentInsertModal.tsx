@@ -91,7 +91,7 @@ const ContentInsertModal: React.FC<ContentInsertModalProps> = ({ListInsertData, 
             {ListInsertData && ListInsertData.params && ListInsertData.params.map((item) => {
               return (
                   <Col key={item.name}>
-                      <DynamicFormItem itemConfig={item} data={detailData[item.name]} modified={true} onChange={ (e:any) =>{
+                      <DynamicFormItem globalDataUrl={dataPath} itemConfig={item} data={detailData[item.name]} modified={true} onChange={ (e:any) =>{
                           const updatedData = { ...detailData, [item.name]: e.target.value };
                           setDetailData(updatedData);
                       }}/>

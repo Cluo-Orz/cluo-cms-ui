@@ -35,7 +35,8 @@ const apiData = {
         required: false,
         regex: '',
         tips: '',
-        rowCount: 0
+        fileCount: 0,
+        fileSuffix: ""
     }],
     params:[{
         dataUrl: '',
@@ -47,7 +48,8 @@ const apiData = {
         regex: '',
         defaultValue: '',
         tips: '',
-        rowCount: 0
+        fileCount: 0,
+        fileSuffix: ""
     }],
     props: {
         hasPagination: false

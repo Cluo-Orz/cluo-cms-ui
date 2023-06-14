@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import {Button, Col, Form, Input, Modal, Table} from 'antd';
+import {Button, Col, Form, Input, Modal, Table, Upload, UploadFile} from 'antd';
 import {DynamicApi} from "./DynamicContent";
 import axios from "axios";
-import { DeleteTwoTone,DeleteFilled}  from "@ant-design/icons";
+import {DeleteTwoTone, DeleteFilled, UploadOutlined} from "@ant-design/icons";
 import DynamicFormTableItem from "./DynamicFormTableItem";
+import {configData} from "../ConfigContext";
 
 
 
@@ -17,23 +18,90 @@ interface DynamicFormItemConfig {
     regex: string,
     defaultValue: string,
     tips: string,
-    rowCount: number
+    fileCount: number,
+    fileSuffix: string
 }
 interface DynamicFormItemProps {
     itemConfig: DynamicFormItemConfig
     data: any
     modified: boolean
     onChange: Function
+    globalDataUrl: string
 }
-
-
-
-const DynamicFormItem: React.FC<DynamicFormItemProps> = ({itemConfig, data, modified, onChange}) => {
+const DynamicFormItem: React.FC<DynamicFormItemProps> = ({itemConfig, data, modified, onChange, globalDataUrl}) => {
 
     const [tableData, setTableData] = useState(data? data : (itemConfig.defaultValue?JSON.parse(itemConfig.defaultValue):[]));
+    const [fileList, setFileList] = useState(
+        data
+            ? typeof data === 'string'
+                ? [
+                    {
+                        uid: '1',
+                        name: '文件1',
+                        status: 'done',
+                        url: data,
+                    }
+                ]
+                // @ts-ignore
+                : data.map((it, index) => {
+                    return {
+                        uid: index,
+                        name: '文件' + index,
+                        status: 'done',
+                        url: it
+                    };
+                })
+            : []
+    );
 
     const findItem = () =>{
-        if(itemConfig.type === 'Button'){
+        if(itemConfig.type === 'File'){
+            console.log("file ", tableData[itemConfig.name])
+            return (
+                <>
+                    <Upload
+                        fileList={fileList}
+                        name={itemConfig.name}
+                        action={globalDataUrl+itemConfig.dataUrl}
+                        listType={(
+                            itemConfig.fileSuffix  && (itemConfig.fileSuffix.includes("png") || itemConfig.fileSuffix.includes("jpg") || itemConfig.fileSuffix.includes("jpeg"))
+                        )?"picture":"text"}
+                        maxCount={itemConfig.fileCount}
+                        showUploadList={{
+                            showRemoveIcon: modified
+                        }}
+                        onChange={(info) =>{
+                            if(info && info.fileList){
+                                let tempFileList : UploadFile[] = []
+                                let filePathList : string[] = []
+                                info.fileList.map((file, index) => {
+                                    tempFileList[index] = file
+                                    if(file.response) {
+                                        file.response.forEach((it:any) => filePathList.push(it))
+
+                                    }
+                                })
+                                setFileList(tempFileList)
+                                console.log("fileList", tempFileList)
+                                console.log("itemConfig.fileCount===1 ", itemConfig.fileCount===1)
+                                console.log("upload ", itemConfig.fileCount===1?filePathList[0]:filePathList)
+                                let e = {
+                                    target: {
+                                        value :itemConfig.fileCount===1?filePathList[0]:filePathList
+                                    }
+                                }
+                                onChange(e); // Call the onChange function to update the state array
+                            }
+                        }}
+                    >
+                        {
+                            modified?(<Button icon={<UploadOutlined/>}>{itemConfig.displayName}上传
+                                (最多: {itemConfig.fileCount}个)</Button>):(<div/>)
+                        }
+                    </Upload>
+                </>
+            )
+        }else if(itemConfig.type === 'Button'){
             return (
                 <>
 

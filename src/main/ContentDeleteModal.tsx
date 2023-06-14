@@ -113,7 +113,7 @@ const ContentDeleteModal: React.FC<ContentUpdateModalProps> = ({ListDeleteData, 
                     {ListSelectDetail && ListSelectDetail.fields && ListSelectDetail.fields.map((item) => {
                         return (
                             <Col key={item.name}>
-                                <DynamicFormItem data={detailData[item.name]} modified={false
+                                <DynamicFormItem globalDataUrl={dataPath} data={detailData[item.name]} modified={false
                                     // @ts-ignore
                                 } itemConfig={item} onChange={() =>{}}/>
                             </Col>
