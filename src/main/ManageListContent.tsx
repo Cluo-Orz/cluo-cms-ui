@@ -61,13 +61,23 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
     ) => {
         let newColumns: any[] = [];
 
+
+        setListData([])
+        setListTotal(0)
+
         if (ListSelectData) {
             ListSelectData.fields.forEach(item => {
-                newColumns.push({
-                    title: item.displayName,
-                    dataIndex: item.name,
-                    key: item.name,
-                });
+                if(item.type==='Button'){
+
+                }else if(item.type==='Table'){
+
+                }else {
+                    newColumns.push({
+                        title: item.displayName,
+                        dataIndex: item.name,
+                        key: item.name,
+                    });
+                }
             });
 
             if (ListSelectDetail || ListUpdateData) {
@@ -78,8 +88,6 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
             }
         }
 
-        console.log("ListSelectData ", ListSelectData);
-        console.log("syncColumns ", newColumns);
         // @ts-ignore
         setColumns(newColumns);
     };

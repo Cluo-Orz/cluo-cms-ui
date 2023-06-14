@@ -34,7 +34,8 @@ const apiData = {
         type: '',
         required: false,
         regex: '',
-        tips: ''
+        tips: '',
+        rowCount: 0
     }],
     params:[{
         dataUrl: '',
@@ -45,7 +46,8 @@ const apiData = {
         required: false,
         regex: '',
         defaultValue: '',
-        tips: ''
+        tips: '',
+        rowCount: 0
     }],
     props: {
         hasPagination: false

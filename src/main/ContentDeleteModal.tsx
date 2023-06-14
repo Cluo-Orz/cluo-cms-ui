@@ -3,6 +3,7 @@ import {Button, Col, Form, Input, Modal} from 'antd';
 import {DynamicApi} from "./DynamicContent";
 import axios from "axios";
 import { DeleteTwoTone,DeleteFilled}  from "@ant-design/icons";
+import DynamicFormItem from "./DynamicFormItem";
 
 
 
@@ -29,7 +30,7 @@ const ContentDeleteModal: React.FC<ContentUpdateModalProps> = ({ListDeleteData, 
         onRefresh(ListSelectData);
     };
 
-    const onClickDetail = () => {
+    const onClickDetail = async () => {
         if (ListSelectDetail) {
             let keyField = ListSelectDetail.keyField
             if (!keyField) {
@@ -38,18 +39,27 @@ const ContentDeleteModal: React.FC<ContentUpdateModalProps> = ({ListDeleteData, 
             let data = {}
             // @ts-ignore
             data[keyField] = record[keyField]
-            axios({
-                method: ListSelectDetail.method,
-                url: dataPath + ListSelectDetail.url,
-                headers: {
-                    'Content-Type': 'application/json;charset=UTF-8',
-                },
-                params: data,
-            })
-                .then(response => {
-                    setDetailData(response.data);
+            try {
+                const response = await axios({
+                    method: ListSelectDetail.method,
+                    url: dataPath + ListSelectDetail.url,
+                    headers: {
+                        'Content-Type': 'application/json;charset=UTF-8',
+                    },
+                    params: data,
                 });
+                setDetailData(response.data);
+            } catch (error) {
+                // 处理请求错误
+            }
         }
+    }
+
+
+    const showModal = async () => {
+        await onClickDetail()
+        console.log(detailData)
+        setOpen(true);
     }
 
     const onClickOk= () => {
@@ -69,11 +79,6 @@ const ContentDeleteModal: React.FC<ContentUpdateModalProps> = ({ListDeleteData, 
         }
     }
 
-    const showModal = () => {
-        onClickDetail()
-        console.log(detailData)
-        setOpen(true);
-    }
 
 
     return (
@@ -108,9 +113,9 @@ const ContentDeleteModal: React.FC<ContentUpdateModalProps> = ({ListDeleteData, 
                     {ListSelectDetail && ListSelectDetail.fields && ListSelectDetail.fields.map((item) => {
                         return (
                             <Col key={item.name}>
-                                <Form.Item label={item.displayName}>
-                                    <Input readOnly value={detailData[item.name]} bordered={false} />
-                                </Form.Item>
+                                <DynamicFormItem data={detailData[item.name]} modified={false
+                                    // @ts-ignore
+                                } itemConfig={item} onChange={() =>{}}/>
                             </Col>
                         );
                     })}

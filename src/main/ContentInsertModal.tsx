@@ -3,6 +3,7 @@ import {Button, Col, Form, Input, Modal} from 'antd';
 import {DynamicApi} from "./DynamicContent";
 import { DeleteTwoTone}  from "@ant-design/icons";
 import axios from "axios";
+import DynamicFormItem from "./DynamicFormItem";
 
 
 
@@ -45,6 +46,7 @@ const ContentInsertModal: React.FC<ContentInsertModalProps> = ({ListInsertData, 
     if (ListInsertData) {
       let data: any = {}
       ListInsertData.params.forEach(item => {
+          console.log(item.name)
         data[item.name] = detailData[item.name]
       })
       axios({
@@ -89,12 +91,10 @@ const ContentInsertModal: React.FC<ContentInsertModalProps> = ({ListInsertData, 
             {ListInsertData && ListInsertData.params && ListInsertData.params.map((item) => {
               return (
                   <Col key={item.name}>
-                    <Form.Item required={item.required} name={item.name} label={item.displayName} rules={[{ pattern: new RegExp(item.regex), message: item.tips }]}>
-                      <Input placeholder={item.placeholder} required={item.required} value={detailData[item.name]} onChange={ (e) =>{
-                        const updatedData = { ...detailData, [item.name]: e.target.value };
-                        setDetailData(updatedData);
+                      <DynamicFormItem itemConfig={item} data={detailData[item.name]} modified={true} onChange={ (e:any) =>{
+                          const updatedData = { ...detailData, [item.name]: e.target.value };
+                          setDetailData(updatedData);
                       }}/>
-                    </Form.Item>
                   </Col>
               );
             })}

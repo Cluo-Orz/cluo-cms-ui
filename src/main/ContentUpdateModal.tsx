@@ -3,6 +3,7 @@ import {Button, Col, Form, Input, Modal} from 'antd';
 import {DynamicApi} from "./DynamicContent";
 import { DeleteTwoTone}  from "@ant-design/icons";
 import axios from "axios";
+import DynamicFormItem from "./DynamicFormItem";
 
 
 
@@ -30,7 +31,7 @@ const ContentUpdateModal: React.FC<ContentUpdateModalProps> = ({ListUpdateData, 
     onRefresh(ListSelectData);
   };
 
-  const onClickDetail = () => {
+  const onClickDetail = async () => {
     if (ListSelectDetail) {
       let keyField = ListSelectDetail.keyField
       if (!keyField) {
@@ -39,17 +40,20 @@ const ContentUpdateModal: React.FC<ContentUpdateModalProps> = ({ListUpdateData, 
       let data = {}
       // @ts-ignore
       data[keyField] = record[keyField]
-      axios({
-        method: ListSelectDetail.method,
-        url: dataPath + ListSelectDetail.url,
-        headers: {
-          'Content-Type': 'application/json;charset=UTF-8',
-        },
-        params: data,
-      })
-          .then(response => {
-            setDetailData(response.data);
-          });
+      try {
+        const response = await axios({
+          method: ListSelectDetail.method,
+          url: dataPath + ListSelectDetail.url,
+          headers: {
+            'Content-Type': 'application/json;charset=UTF-8',
+          },
+          params: data,
+        });
+        console.log("response.data ",response.data)
+        setDetailData(response.data);
+      } catch (error) {
+        // 处理请求错误
+      }
     }
   }
 
@@ -75,8 +79,8 @@ const ContentUpdateModal: React.FC<ContentUpdateModalProps> = ({ListUpdateData, 
     }
   }
 
-  const showModal = () => {
-    onClickDetail()
+  const showModal = async () => {
+    await onClickDetail()
     console.log(detailData)
     setOpen(true);
   }
@@ -102,12 +106,10 @@ const ContentUpdateModal: React.FC<ContentUpdateModalProps> = ({ListUpdateData, 
             {ListUpdateData && ListUpdateData.params.map((item) => {
               return (
                   <Col key={item.name}>
-                    <Form.Item required={item.required} name={item.name} label={item.displayName} rules={[{ pattern: new RegExp(item.regex), message: item.tips }]}>
-                      <Input placeholder={item.placeholder} required={item.required} value={detailData[item.name]} onChange={ (e) =>{
-                        const updatedData = { ...detailData, [item.name]: e.target.value };
-                        setDetailData(updatedData);
-                      }}/>
-                    </Form.Item>
+                    <DynamicFormItem itemConfig={item} data={detailData[item.name]} modified={true } onChange={ (e:any) =>{
+                      const updatedData = { ...detailData, [item.name]: e.target.value };
+                      setDetailData(updatedData);
+                    }}/>
                   </Col>
               );
             })}

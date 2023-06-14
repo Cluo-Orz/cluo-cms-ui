@@ -3,6 +3,7 @@ import {Button, Col, Form, Input, Modal} from 'antd';
 import {DynamicApi} from "./DynamicContent";
 import {SettingTwoTone} from "@ant-design/icons";
 import axios from "axios";
+import DynamicFormItem from "./DynamicFormItem";
 
 
 interface ManageListContentProps {
@@ -20,7 +21,7 @@ const ContentDetailModal: React.FC<ManageListContentProps> = ({ListSelectDetail,
     const [detailData ,setDetailData] = useState<any>({})
 
 
-    const onClickDetail = (ListSelectDetail: DynamicApi | undefined) => {
+    const onClickDetail = async (ListSelectDetail: DynamicApi | undefined) => {
         if (ListSelectDetail) {
             let keyField = ListSelectDetail.keyField
             if (!keyField) {
@@ -29,19 +30,25 @@ const ContentDetailModal: React.FC<ManageListContentProps> = ({ListSelectDetail,
             let data = {}
             // @ts-ignore
             data[keyField] = record[keyField]
-            axios({
-                method: ListSelectDetail.method,
-                url: dataPath + ListSelectDetail.url,
-                params: data,
-            })
-                .then(response => {
-                    setDetailData(response.data);
+            try {
+                const response = await axios({
+                    method: ListSelectDetail.method,
+                    url: dataPath + ListSelectDetail.url,
+                    headers: {
+                        'Content-Type': 'application/json;charset=UTF-8',
+                    },
+                    params: data,
                 });
+
+                setDetailData(response.data);
+            } catch (error) {
+                // 处理请求错误
+            }
         }
     };
 
-    const showModal = () => {
-        onClickDetail(ListSelectDetail)
+    const showModal = async () => {
+        await onClickDetail(ListSelectDetail)
         console.log(detailData)
         setOpen(true);
     };
@@ -65,9 +72,9 @@ const ContentDetailModal: React.FC<ManageListContentProps> = ({ListSelectDetail,
                     {ListSelectDetail && ListSelectDetail.fields && ListSelectDetail.fields.map((item) => {
                         return (
                             <Col key={item.name}>
-                                <Form.Item label={item.displayName}>
-                                    <Input readOnly value={detailData[item.name]} bordered={false} />
-                                </Form.Item>
+                                <DynamicFormItem data={detailData[item.name]} modified={false
+                                // @ts-ignore
+                                } itemConfig={item} onChange={() =>{}}/>
                             </Col>
                         );
                     })}
