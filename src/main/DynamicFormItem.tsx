@@ -31,9 +31,8 @@ interface DynamicFormItemProps {
 const DynamicFormItem: React.FC<DynamicFormItemProps> = ({itemConfig, data, modified, onChange, globalDataUrl}) => {
 
     const [tableData, setTableData] = useState(data? data : (itemConfig.defaultValue?JSON.parse(itemConfig.defaultValue):[]));
-    const [fileList, setFileList] = useState(
-        data
-            ? typeof data === 'string'
+    console.log(data)
+    const [fileList, setFileList] = useState(data ? typeof data != 'object'
                 ? [
                     {
                         uid: '1',

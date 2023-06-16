@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ConfigContext, configData } from '../ConfigContext';
 import axios from "axios";
 import { DynamicApi } from "./DynamicContent";
-import { Button, Col, Form, Input, Row, Space, Table, Modal } from "antd";
+import {Button, Col, Form, Input, Row, Space, Table, Modal, Popconfirm, Image} from "antd";
 import { SyncOutlined, DownOutlined,SettingTwoTone } from "@ant-design/icons";
 import ContentUpdateModal from "./ContentUpdateModal";
 import ContentDetailModal from "./ContentDetailModal";
@@ -76,6 +76,22 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
 
                 }else if(item.type==='Table'){
 
+                }else if(item.type==='File'){
+                    newColumns.push({
+                        title: item.displayName,
+                        dataIndex: item.name,
+                        key: item.name,
+                        render: (_: any, record: { dataIndex: React.Key }) =>{
+                            console.log(typeof _)
+
+                            return _?(
+                                <Image
+                                    width={100}
+                                    src={_.toString()}
+                                />
+                            ):_;
+                        }
+                    });
                 }else {
                     newColumns.push({
                         title: item.displayName,
@@ -139,13 +155,27 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
                     total = response.data.total;
                     listData = response.data.data;
                 }
-                // 如果data[i]中，没有id，则向每个元素补充一个id
-                listData.forEach((item: any, index: number) => {
-                    if (!item.id) {
-                        item.id = index;
+
+                // @ts-ignore
+                listData = listData.map(obj => {
+                    const newObj: any = {};
+                    for (const key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                            newObj[key] = obj[key].toString();
+                        }
                     }
+                    return newObj;
                 });
+
                 console.log(listData)
+                // 如果data[i]中，没有id，则向每个元素补充一个id
+                if(listData) {
+                    listData.forEach((item: any, index: number) => {
+                        if (!item.id) {
+                            item.id = index;
+                        }
+                    });
+                }
                 setListTotal(total);
                 setListData(listData);
             });
