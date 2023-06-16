@@ -30,8 +30,11 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
     const [ListUpdateData, setListUpdateData] = useState<DynamicApi | undefined>(actions.find(item => item.action === 'ListUpdateData'));
     const [ListDeleteData, setListDeleteData] = useState<DynamicApi | undefined>(actions.find(item => item.action === 'ListDeleteData'));
     const [ListSelectDetail, setListSelectDetail] = useState<DynamicApi | undefined>(actions.find(item => item.action === 'ListSelectDetail'));
+    const [size, setSize] = useState<number>(10)
+    const [page, setPage] = useState<number>(1)
     const [detailData, setDetailData] = useState<any>(null); // Added detailData state
     const [form] = Form.useForm();
+
 
 
     useEffect(() => {
@@ -52,7 +55,7 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
     useEffect(() => {
         console.log("sync DataFromRemote")
         syncDataFromRemote(ListSelectData, searchParam);
-    }, [columns, searchParam])
+    }, [columns, searchParam, page])
 
     const syncColumns = (
         ListSelectData: DynamicApi | undefined,
@@ -66,6 +69,8 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
         setListTotal(0)
 
         if (ListSelectData) {
+            setPage(ListSelectData.defaultPage)
+            setSize(ListSelectData.defaultSize)
             ListSelectData.fields.forEach(item => {
                 if(item.type==='Button'){
 
@@ -117,6 +122,10 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
             url: config.dataPath + param.url,
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
+            },
+            params:{
+                page: page,
+                size: size
             },
             data: data,
         })
@@ -246,7 +255,11 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
             {}
             <Table columns={
                 columns
-            } dataSource={listData} rowKey={ListSelectData?.keyField?ListSelectData?.keyField:"id"}/>
+            } dataSource={listData} rowKey={ListSelectData?.keyField?ListSelectData?.keyField:"id"}
+            pagination={{ current:page, pageSize: size, total: listTotal, position: ["bottomRight"], onChange: (page, pageSize) =>{
+                setPage(page);
+                setSize(pageSize)
+            }}}/>
         </div>
     );
 };
