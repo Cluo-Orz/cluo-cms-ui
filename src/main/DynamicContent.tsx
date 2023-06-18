@@ -23,6 +23,7 @@ interface DynamicContentComponentProps {
 const apiData = {
     action: '',
     url: '',
+    name: '',
     method: '',
     contentType: '',
     keyField: '',
@@ -112,6 +113,9 @@ class DynamicContentComponent extends React.PureComponent<DynamicContentComponen
             {
                 method: 'get',
                 url: this.props.config.basePath+"/cms/content/"+selectedTopBar+"/"+selectedSideBar+"/"+selectedSubSideBar,
+                headers: {
+                    'X-Client-Cms': 'true'
+                }
             }
         ).then((response) => {
             this.setState({

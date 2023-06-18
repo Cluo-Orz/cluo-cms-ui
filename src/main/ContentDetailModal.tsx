@@ -36,6 +36,7 @@ const ContentDetailModal: React.FC<ManageListContentProps> = ({ListSelectDetail,
                     url: dataPath + ListSelectDetail.url,
                     headers: {
                         'Content-Type': 'application/json;charset=UTF-8',
+                        'X-Client-Cms': 'true'
                     },
                     params: data,
                 });

@@ -45,6 +45,7 @@ const ContentDeleteModal: React.FC<ContentUpdateModalProps> = ({ListDeleteData, 
                     url: dataPath + ListSelectDetail.url,
                     headers: {
                         'Content-Type': 'application/json;charset=UTF-8',
+                        'X-Client-Cms': 'true'
                     },
                     params: data,
                 });
@@ -70,6 +71,9 @@ const ContentDeleteModal: React.FC<ContentUpdateModalProps> = ({ListDeleteData, 
             axios({
                 method: ListDeleteData.method,
                 url: dataPath + ListDeleteData.url,
+                headers:{
+                    'X-Client-Cms': 'true'
+                },
                 params: data,
             })
                 .then(response => {

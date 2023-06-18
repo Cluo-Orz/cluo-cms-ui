@@ -54,6 +54,7 @@ const ContentInsertModal: React.FC<ContentInsertModalProps> = ({ListInsertData, 
         url: dataPath + ListInsertData.url,
         headers: {
           'Content-Type': 'application/json;charset=UTF-8',
+            'X-Client-Cms': 'true'
         },
         data: data,
       })

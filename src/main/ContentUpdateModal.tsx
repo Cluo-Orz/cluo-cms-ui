@@ -46,6 +46,7 @@ const ContentUpdateModal: React.FC<ContentUpdateModalProps> = ({ListUpdateData, 
           url: dataPath + ListSelectDetail.url,
           headers: {
             'Content-Type': 'application/json;charset=UTF-8',
+            'X-Client-Cms': 'true'
           },
           params: data,
         });
@@ -69,6 +70,7 @@ const ContentUpdateModal: React.FC<ContentUpdateModalProps> = ({ListUpdateData, 
         url: dataPath + ListUpdateData.url,
         headers: {
           'Content-Type': 'application/json;charset=UTF-8',
+          'X-Client-Cms': 'true'
         },
         data: data,
       })
