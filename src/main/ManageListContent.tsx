@@ -236,9 +236,9 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
         if(TextButtonActions){
             TextButtonActions.forEach((buttonAction,index) => {
                 actionButtons.push((
-                    <Col key={"TextButtonActions_"+index} span={6}>
-                        <Space.Compact>
-                            <Input value={textButtonData[buttonAction.keyField]} onChange={(e) => {
+                    <Col key={"TextButtonActions_"+index}>
+                        <Space.Compact style={{marginBottom: 10}}>
+                            <Input value={textButtonData[buttonAction.keyField]} style={{width: 80}} onChange={(e) => {
                                 setTextButtonData({
                                     ...textButtonData,
                                     [buttonAction.keyField]: e.target.value
@@ -259,7 +259,7 @@ const ManageListContent: React.FC<ManageListContentProps> = ({ parentReloadTag, 
                                         [buttonAction.keyField]: textButtonData[buttonAction.keyField]?textButtonData[buttonAction.keyField]:""
                                     }
                                 }).then((response) =>{
-                                    setModalTitle(buttonAction.name+"执行结果")
+                                    setModalTitle(buttonAction.name+"执行结果");
                                     if (response.status === 200) {
                                         setModalText(response.data?response.data:"执行成功");
                                         syncDataFromRemote(ListSelectData, searchParam);

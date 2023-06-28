@@ -18,7 +18,8 @@ interface ManageListContentProps {
 const ContentDetailModal: React.FC<ManageListContentProps> = ({ListSelectDetail,record,dataPath}) => {
     const [open, setOpen] = useState(false);
 
-    const [detailData ,setDetailData] = useState<any>({})
+
+    const [detailData ,setDetailData] = useState<any>({});
 
 
     const onClickDetail = async (ListSelectDetail: DynamicApi | undefined) => {
@@ -42,6 +43,7 @@ const ContentDetailModal: React.FC<ManageListContentProps> = ({ListSelectDetail,
                 });
 
                 setDetailData(response.data);
+                setOpen(true);
             } catch (error) {
                 // 处理请求错误
             }
@@ -51,7 +53,6 @@ const ContentDetailModal: React.FC<ManageListContentProps> = ({ListSelectDetail,
     const showModal = async () => {
         await onClickDetail(ListSelectDetail)
         console.log(detailData)
-        setOpen(true);
     };
 
 

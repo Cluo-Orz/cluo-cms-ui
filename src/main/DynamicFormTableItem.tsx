@@ -104,11 +104,11 @@ interface DynamicFormTableItemProps {
 
 
 const DynamicFormTableItem: React.FC<DynamicFormTableItemProps> = ({onChange, dataColumns, data,modified}) => {
-    const [dataSource, setDataSource] = useState<any[]>((data?data:[]).map((it,idx)=>{
+    const [dataSource, setDataSource] = useState<any[]>(data.map((it,idx)=>{
         return {
             ...it,
             dataIndex: idx
-        }
+        };
     }));
 
     const [count, setCount] = useState(data?data.length:0);

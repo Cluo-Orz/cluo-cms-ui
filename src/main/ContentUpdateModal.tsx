@@ -50,7 +50,6 @@ const ContentUpdateModal: React.FC<ContentUpdateModalProps> = ({ListUpdateData, 
           },
           params: data,
         });
-        console.log("response.data ",response.data)
         setDetailData(response.data);
       } catch (error) {
         // 处理请求错误
@@ -109,6 +108,7 @@ const ContentUpdateModal: React.FC<ContentUpdateModalProps> = ({ListUpdateData, 
               return (
                   <Col key={item.name}>
                     <DynamicFormItem globalDataUrl={dataPath} itemConfig={item} data={detailData[item.name]} modified={true } onChange={ (e:any) =>{
+                      console.log("onChangeFormData "+item.name+"="+e.target.value)
                       const updatedData = { ...detailData, [item.name]: e.target.value };
                       setDetailData(updatedData);
                     }}/>

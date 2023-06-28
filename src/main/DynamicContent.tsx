@@ -39,12 +39,14 @@ const apiData = {
         regex: '',
         tips: '',
         fileCount: 0,
+        fileName: '',
         fileSuffix: ""
     }],
     params:[{
         dataUrl: '',
         placeholder: '',
         displayName: '',
+        fileName: '',
         name: '',
         type: '',
         required: false,

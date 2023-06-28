@@ -14,6 +14,7 @@ interface DynamicFormItemConfig {
     placeholder: string,
     displayName: string,
     name: string,
+    fileName: string,
     type: string,
     required: boolean,
     regex: string,
@@ -31,10 +32,11 @@ interface DynamicFormItemProps {
 }
 const DynamicFormItem: React.FC<DynamicFormItemProps> = ({itemConfig, data, modified, onChange, globalDataUrl}) => {
 
+    console.log("DynamicFormItem ", data)
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
     const [previewTitle, setPreviewTitle] = useState('');
-    const [tableData, setTableData] = useState(itemConfig.type === 'Table'? (data? data : (itemConfig.defaultValue? (typeof itemConfig.defaultValue === 'string'?JSON.parse(itemConfig.defaultValue):itemConfig.defaultValue):[])) :[]);
+    const [tableData, setTableData] = useState(itemConfig.type === 'Table'? (data? (typeof data === 'string'?JSON.parse(data):data) : (itemConfig.defaultValue? (typeof itemConfig.defaultValue === 'string'?JSON.parse(itemConfig.defaultValue):itemConfig.defaultValue):[])) :[]);
     const [fileList, setFileList] = useState(data ? typeof data != 'object'
                 ? [
                     {
@@ -78,13 +80,12 @@ const DynamicFormItem: React.FC<DynamicFormItemProps> = ({itemConfig, data, modi
 
     const findItem = () =>{
         if(itemConfig.type === 'File'){
-            console.log("file ", fileList)
             return (
                 <>
                     {itemConfig.displayName+"上传(最多上传:"+itemConfig.fileCount+"个):"}
                     <Upload
                         fileList={fileList}
-                        name={itemConfig.name}
+                        name={itemConfig.fileName?itemConfig.fileName:itemConfig.name}
                         action={globalDataUrl+itemConfig.dataUrl}
                         listType={(
                             itemConfig.fileSuffix  && (itemConfig.fileSuffix.includes("png") || itemConfig.fileSuffix.includes("jpg") || itemConfig.fileSuffix.includes("jpeg"))
@@ -97,15 +98,18 @@ const DynamicFormItem: React.FC<DynamicFormItemProps> = ({itemConfig, data, modi
                         onChange={(info) =>{
                             if(info && info.fileList){
                                 let tempFileList : UploadFile[] = []
-                                let filePathList : string[] = []
-                                info.fileList.map((file, index) => {
-                                    tempFileList[index] = file
-                                    if(file.response) {
-                                        file.response.forEach((it:any) => filePathList.push(it))
-
+                                let filePathList: string[] = [];
+                                console.log("fileData ", info);
+                                tempFileList = info.fileList.map((file) => {
+                                    if(file.url){
+                                        filePathList.push(file.url)
+                                    }else if (file.response) {
+                                        filePathList = filePathList.concat(file.response);
                                     }
-                                })
+                                    return file;
+                                });
                                 setFileList(tempFileList)
+                                console.log("filePathList", filePathList)
                                 console.log("fileList", tempFileList)
                                 console.log("itemConfig.fileCount===1 ", itemConfig.fileCount===1)
                                 console.log("upload ", itemConfig.fileCount===1?filePathList[0]:filePathList)
@@ -134,8 +138,7 @@ const DynamicFormItem: React.FC<DynamicFormItemProps> = ({itemConfig, data, modi
                 </>
             )
         } else if(itemConfig.type === 'Table'){
-            console.log("findItem")
-            console.log(data)
+            console.log("findItem ",data)
             const handleTableChange = (newData:any[]) => {
                 newData = newData.map(({dataIndex, ...rest}) => rest);
                 setTableData(newData);
@@ -161,8 +164,7 @@ const DynamicFormItem: React.FC<DynamicFormItemProps> = ({itemConfig, data, modi
                 <DynamicFormTableItem data={tableData} onChange={handleTableChange} dataColumns={columns} modified={modified}/>
             );
         }else {
-            console.log("itemConfig ",itemConfig)
-            console.log(data)
+            console.log("itemConfig ",itemConfig, data)
            return (
                <>
                    <Form.Item required={itemConfig.required} name={itemConfig.name} label={itemConfig.displayName} rules={[{ pattern: new RegExp(itemConfig.regex), message: itemConfig.tips }]}>

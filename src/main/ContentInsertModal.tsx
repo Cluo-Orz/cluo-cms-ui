@@ -21,7 +21,22 @@ interface ContentInsertModalProps {
 const ContentInsertModal: React.FC<ContentInsertModalProps> = ({ListInsertData, ListSelectData, dataPath, onRefresh}) => {
   const [open, setOpen] = useState(false);
 
-  const [detailData ,setDetailData] = useState<any>({})
+const DynamicApiToDefaultValueMap = (ListInsertData:DynamicApi| undefined) =>{
+    if(!ListInsertData){
+        return {}
+    }
+    let data :any={}
+    ListInsertData.params.forEach(param => {
+        if(param.defaultValue) {
+            data[param.name] = param.defaultValue
+        }
+    })
+    return data;
+}
+
+  const [detailData ,setDetailData] = useState<any>(DynamicApiToDefaultValueMap(ListInsertData));
+
+
 
   const handleButtonClick = () => {
     console.log(ListSelectData)
