@@ -39,6 +39,8 @@ const apiData = {
         regex: '',
         tips: '',
         fileCount: 0,
+        richText: false,
+        bool: false,
         fileName: '',
         fileSuffix: ""
     }],
@@ -54,6 +56,8 @@ const apiData = {
         defaultValue: '',
         tips: '',
         fileCount: 0,
+        richText: false,
+        bool: false,
         fileSuffix: ""
     }],
     props: {

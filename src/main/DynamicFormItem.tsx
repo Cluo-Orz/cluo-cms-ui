@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import {Button, Col, Form, Input, Modal, Table, Upload, UploadFile} from 'antd';
+import {Button, Col, Form, Input, Modal, Row, Switch, Table, Upload, UploadFile} from 'antd';
 import {DynamicApi} from "./DynamicContent";
 import axios from "axios";
 import {DeleteTwoTone, DeleteFilled, UploadOutlined} from "@ant-design/icons";
 import DynamicFormTableItem from "./DynamicFormTableItem";
 import {configData} from "../ConfigContext";
 import type { RcFile, UploadProps } from 'antd/es/upload';
+import {Editor, EditorState} from 'draft-js';
+import 'draft-js/dist/Draft.css';
+import RichTextEditor from "./RichTextEditor";
 
 
 
@@ -21,8 +24,13 @@ interface DynamicFormItemConfig {
     defaultValue: any,
     tips: string,
     fileCount: number,
+    richText: boolean,
+    bool: boolean,
     fileSuffix: string
 }
+
+
+
 interface DynamicFormItemProps {
     itemConfig: DynamicFormItemConfig
     data: any
@@ -37,6 +45,7 @@ const DynamicFormItem: React.FC<DynamicFormItemProps> = ({itemConfig, data, modi
     const [previewImage, setPreviewImage] = useState('');
     const [previewTitle, setPreviewTitle] = useState('');
     const [tableData, setTableData] = useState(itemConfig.type === 'Table'? (data? (typeof data === 'string'?JSON.parse(data):data) : (itemConfig.defaultValue? (typeof itemConfig.defaultValue === 'string'?JSON.parse(itemConfig.defaultValue):itemConfig.defaultValue):[])) :[]);
+    const [editorState, setEditorState] = useState(EditorState.createEmpty());
     const [fileList, setFileList] = useState(data ? typeof data != 'object'
                 ? [
                     {
@@ -77,6 +86,10 @@ const DynamicFormItem: React.FC<DynamicFormItemProps> = ({itemConfig, data, modi
 
 
     const handleCancel = () => setPreviewOpen(false);
+
+    const onChangeEditor = (editorState: any) => {
+        setEditorState(editorState);
+    }
 
     const findItem = () =>{
         if(itemConfig.type === 'File'){
@@ -131,6 +144,23 @@ const DynamicFormItem: React.FC<DynamicFormItemProps> = ({itemConfig, data, modi
                     </Modal>
                 </>
             )
+        }else if(itemConfig.bool){
+            return (
+                <>
+                    <Row>
+                        <span>{itemConfig.displayName}：</span>
+
+                        <Switch checkedChildren="开启" unCheckedChildren="关闭" defaultChecked={data} checked={data} onClick={() => {
+                            let e = {
+                                target: {
+                                    value :!data
+                                }
+                            }
+                            onChange(e); // Call the onChange function to update the state array
+                        }}/></Row>
+
+                </>
+            )
         }else if(itemConfig.type === 'Button'){
             return (
                 <>
@@ -163,6 +193,15 @@ const DynamicFormItem: React.FC<DynamicFormItemProps> = ({itemConfig, data, modi
             return (
                 <DynamicFormTableItem data={tableData} onChange={handleTableChange} dataColumns={columns} modified={modified}/>
             );
+        }else if(itemConfig.richText){
+            console.log("itemConfig ",itemConfig, data)
+            return (
+                <>
+                    {itemConfig.displayName}：
+                    <br/>
+                    <RichTextEditor data={data} onChange={onChange} isEdit={modified}/>
+                </>
+            )
         }else {
             console.log("itemConfig ",itemConfig, data)
            return (
